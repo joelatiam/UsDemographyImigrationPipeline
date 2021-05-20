@@ -1,7 +1,9 @@
+import os
+
 from airflow.hooks.S3_hook import S3Hook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
-import os
+
 
 
 class LoadToS3Operator(BaseOperator):

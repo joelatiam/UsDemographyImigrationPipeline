@@ -12,7 +12,7 @@ class DemographyImmigrationPlugin(AirflowPlugin):
     name = "pipeline_plugin"
     operators = [
         operators.PandasCleanCsvOperator,
-        # operators.LoadToS3Operator,
+        operators.LoadToS3Operator,
         # operators.RedshifQueriesOperator,
         # operators.S3ToRedshiftOperator
     ]

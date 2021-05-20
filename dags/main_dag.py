@@ -5,7 +5,7 @@ from airflow.models import Variable
 
 from operators import (
     PandasCleanCsvOperator, 
-    # LoadToS3Operator,
+    LoadToS3Operator,
     # RedshifQueriesOperator, S3ToRedshiftOperator
     )
 from helpers import (
@@ -35,7 +35,7 @@ dag = DAG(
     # schedule_interval=None
 )
 
-s3_raw_data_dir = 'UsDemographyImmigration/data/raw'
+s3_data_dir = 'UsDemographyImmigration/data'
 
 
 clean_demography_csv = PandasCleanCsvOperator(
@@ -56,21 +56,21 @@ clean_airports_csv = PandasCleanCsvOperator(
     dag=dag,
 )
 
-# copy_demography_to_S3 = LoadToS3Operator(
-#     task_id='copy_demography_to_S3',
-#     local_directory='dags/data/demography',
-#     s3_directory=f"{s3_raw_data_dir}/demography",
-#     s3_bucket=s3_bucket,
-#     dag=dag,
-# )
+copy_demography_to_S3 = LoadToS3Operator(
+    task_id='copy_demography_to_S3',
+    local_directory='dags/data/cleaned/demography',
+    s3_directory=f"{s3_data_dir}/demography",
+    s3_bucket=s3_bucket,
+    dag=dag,
+)
 
-# copy_airports_to_S3 = LoadToS3Operator(
-#     task_id='copy_airports_to_S3',
-#     local_directory='dags/data/airports',
-#     s3_directory=f"{s3_raw_data_dir}/airports",
-#     s3_bucket=s3_bucket,
-#     dag=dag,
-# )
+copy_airports_to_S3 = LoadToS3Operator(
+    task_id='copy_airports_to_S3',
+    local_directory='dags/data/cleaned/airports',
+    s3_directory=f"{s3_data_dir}/airports",
+    s3_bucket=s3_bucket,
+    dag=dag,
+)
 
 # drop_redshift_tables = RedshifQueriesOperator(
 #     task_id='drop_redshift_tables',
@@ -93,10 +93,11 @@ clean_airports_csv = PandasCleanCsvOperator(
 #     redshift_conn_id='redshift',
 #     aws_credentials_id='aws_credentials',
 #     tables=staging_tables,
-#     s3_directory=f"{s3_raw_data_dir}",
+#     s3_directory=f"{s3_data_dir}",
 #     s3_bucket=s3_bucket,
 #     dag=dag
 # )
 
-# [copy_demography_to_S3, copy_airports_to_S3] >> drop_redshift_tables >> create_redshift_tables
-# drop_redshift_tables >> create_redshift_tables
+clean_demography_csv >> copy_demography_to_S3
+
+clean_airports_csv >> copy_airports_to_S3
