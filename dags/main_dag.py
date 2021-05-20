@@ -6,12 +6,12 @@ from airflow.models import Variable
 from operators import (
     PandasCleanCsvOperator, 
     LoadToS3Operator,
-    # RedshifQueriesOperator, S3ToRedshiftOperator
+    RedshifQueriesOperator, S3ToRedshiftOperator
     )
 from helpers import (
-    # create_tables_queries, drop_tables_queries,
+    create_tables_queries, drop_tables_queries,
     staging_data, 
-    # staging_tables
+    staging_tables
     )
 
 s3_bucket = Variable.get("s3_bucket")
@@ -72,32 +72,47 @@ copy_airports_to_S3 = LoadToS3Operator(
     dag=dag,
 )
 
-# drop_redshift_tables = RedshifQueriesOperator(
-#     task_id='drop_redshift_tables',
-#     redshift_conn_id='redshift',
-#     query_list=drop_tables_queries,
-#     query_type='drop tables',
-#     dag=dag,
-# )
+drop_redshift_staging_tables = RedshifQueriesOperator(
+    task_id='drop_redshift_staging_tables',
+    redshift_conn_id='redshift',
+    query_list=drop_tables_queries,
+    query_type='drop tables',
+    dag=dag,
+)
 
-# create_redshift_tables = RedshifQueriesOperator(
-#     task_id='create_redshift_tables',
-#     redshift_conn_id='redshift',
-#     query_list=create_tables_queries,
-#     query_type='create tables',
-#     dag=dag,
-# )
+create_redshift_staging_tables = RedshifQueriesOperator(
+    task_id='create_redshift_staging_tables',
+    redshift_conn_id='redshift',
+    query_list=create_tables_queries,
+    query_type='create tables',
+    dag=dag,
+)
 
-# stage_events_to_redshift = S3ToRedshiftOperator(
-#     task_id='Stages_to_Redshift',
-#     redshift_conn_id='redshift',
-#     aws_credentials_id='aws_credentials',
-#     tables=staging_tables,
-#     s3_directory=f"{s3_data_dir}",
-#     s3_bucket=s3_bucket,
-#     dag=dag
-# )
+stage_demography_to_redshift = S3ToRedshiftOperator(
+    task_id='stage_demography_to_redshift',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    table=staging_tables["demography"],
+    s3_directory=f"{s3_data_dir}",
+    s3_bucket=s3_bucket,
+    dag=dag
+)
+
+stage_airports_to_redshift = S3ToRedshiftOperator(
+    task_id='stage_airports_to_redshift',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    table=staging_tables["airports"],
+    s3_directory=f"{s3_data_dir}",
+    s3_bucket=s3_bucket,
+    dag=dag
+)
+
 
 clean_demography_csv >> copy_demography_to_S3
 
 clean_airports_csv >> copy_airports_to_S3
+
+[copy_demography_to_S3, copy_airports_to_S3] >> drop_redshift_staging_tables >> create_redshift_staging_tables
+
+create_redshift_staging_tables >> [stage_demography_to_redshift, stage_airports_to_redshift]

@@ -13,12 +13,12 @@ class DemographyImmigrationPlugin(AirflowPlugin):
     operators = [
         operators.PandasCleanCsvOperator,
         operators.LoadToS3Operator,
-        # operators.RedshifQueriesOperator,
-        # operators.S3ToRedshiftOperator
+        operators.RedshifQueriesOperator,
+        operators.S3ToRedshiftOperator
     ]
     helpers = [
         helpers.staging_data,
-        # helpers.staging_tables,
-        # helpers.create_tables_queries,
-        # helpers.drop_tables_queries
+        helpers.staging_tables,
+        helpers.create_tables_queries,
+        helpers.drop_tables_queries
     ]

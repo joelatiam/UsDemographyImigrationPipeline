@@ -46,7 +46,7 @@ class PandasCleanCsvOperator(BaseOperator):
                         df = df.astype(self.data_definition["convert"])
                 
                 cleaned_file = os.path.join(dest_directory,f)
-                df.to_csv(cleaned_file)
+                df.to_csv(cleaned_file, index = False)
                 self.log.info(f"Saved {dest_directory}")
 
         self.log.info(f"End {action}")
