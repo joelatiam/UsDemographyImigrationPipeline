@@ -26,6 +26,13 @@ JOB_FLOW_OVERRIDES = {
                 'InstanceType': 'm5.xlarge',
                 'InstanceCount': 1,
             },
+            {
+                "Name": "Core nodes",
+                "Market": "SPOT", 
+                "InstanceRole": "CORE",
+                "InstanceType": "m5.xlarge",
+                "InstanceCount": 2,
+            },
         ],
         'KeepJobFlowAliveWhenNoSteps': True,
         'TerminationProtected': False,
