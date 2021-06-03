@@ -20,5 +20,7 @@ class DemographyImmigrationPlugin(AirflowPlugin):
         helpers.staging_data,
         helpers.staging_tables,
         helpers.create_tables_queries,
-        helpers.drop_tables_queries
+        helpers.drop_tables_queries,
+        helpers.JOB_FLOW_OVERRIDES,
+        helpers.SPARK_STEPS
     ]

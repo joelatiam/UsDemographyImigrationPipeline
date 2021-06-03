@@ -2,6 +2,18 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.models import Variable
+from airflow.contrib.operators.emr_create_job_flow_operator import (
+    EmrCreateJobFlowOperator
+)
+from airflow.contrib.operators.emr_add_steps_operator import (
+    EmrAddStepsOperator
+)
+from airflow.contrib.sensors.emr_step_sensor import (
+    EmrStepSensor
+)
+from airflow.contrib.operators.emr_terminate_job_flow_operator import (
+    EmrTerminateJobFlowOperator
+)
 
 from operators import (
     PandasCleanCsvOperator, 
@@ -11,12 +23,14 @@ from operators import (
 from helpers import (
     create_tables_queries, drop_tables_queries,
     staging_data, 
-    staging_tables
+    staging_tables,
+    JOB_FLOW_OVERRIDES,
+    SPARK_STEPS
     )
 
 s3_bucket = Variable.get("s3_bucket")
 
-start_date = datetime(2021, 5, 20)
+start_date = datetime(2021, 6, 3)
 
 default_args = {
     'owner': 'joelatiam',
@@ -36,83 +50,130 @@ dag = DAG(
 )
 
 s3_data_dir = 'UsDemographyImmigration/data'
+s3_scripts_dir = 'UsDemographyImmigration/scripts'
 
 
-clean_demography_csv = PandasCleanCsvOperator(
-    task_id='clean_demography_csv',
-    source_directory_path='dags/data/raw/demography',
-    destination_directory_path='dags/data/cleaned/demography',
-    delimiter=';',
-    data_definition = staging_data["demography"],
-    dag=dag,
-)
+# clean_demography_csv = PandasCleanCsvOperator(
+#     task_id='clean_demography_csv',
+#     source_directory_path='dags/data/raw/demography',
+#     destination_directory_path='dags/data/cleaned/demography',
+#     delimiter=';',
+#     data_definition = staging_data["demography"],
+#     dag=dag,
+# )
 
-clean_airports_csv = PandasCleanCsvOperator(
-    task_id='clean_airports_csv',
-    source_directory_path='dags/data/raw/airports',
-    destination_directory_path='dags/data/cleaned/airports',
-    delimiter=',',
-    data_definition = staging_data["airports"],
-    dag=dag,
-)
+# clean_airports_csv = PandasCleanCsvOperator(
+#     task_id='clean_airports_csv',
+#     source_directory_path='dags/data/raw/airports',
+#     destination_directory_path='dags/data/cleaned/airports',
+#     delimiter=',',
+#     data_definition = staging_data["airports"],
+#     dag=dag,
+# )
 
-copy_demography_to_S3 = LoadToS3Operator(
-    task_id='copy_demography_to_S3',
-    local_directory='dags/data/cleaned/demography',
-    s3_directory=f"{s3_data_dir}/demography",
+# copy_demography_to_S3 = LoadToS3Operator(
+#     task_id='copy_demography_to_S3',
+#     local_directory='dags/data/cleaned/demography',
+#     s3_directory=f"{s3_data_dir}/demography",
+#     s3_bucket=s3_bucket,
+#     dag=dag,
+# )
+
+# copy_airports_to_S3 = LoadToS3Operator(
+#     task_id='copy_airports_to_S3',
+#     local_directory='dags/data/cleaned/airports',
+#     s3_directory=f"{s3_data_dir}/airports",
+#     s3_bucket=s3_bucket,
+#     dag=dag,
+# )
+
+# drop_redshift_staging_tables = RedshifQueriesOperator(
+#     task_id='drop_redshift_staging_tables',
+#     redshift_conn_id='redshift',
+#     query_list=drop_tables_queries,
+#     query_type='drop tables',
+#     dag=dag,
+# )
+
+# create_redshift_staging_tables = RedshifQueriesOperator(
+#     task_id='create_redshift_staging_tables',
+#     redshift_conn_id='redshift',
+#     query_list=create_tables_queries,
+#     query_type='create tables',
+#     dag=dag,
+# )
+
+# stage_demography_to_redshift = S3ToRedshiftOperator(
+#     task_id='stage_demography_to_redshift',
+#     redshift_conn_id='redshift',
+#     aws_credentials_id='aws_credentials',
+#     table=staging_tables["demography"],
+#     s3_directory=f"{s3_data_dir}",
+#     s3_bucket=s3_bucket,
+#     dag=dag
+# )
+
+# stage_airports_to_redshift = S3ToRedshiftOperator(
+#     task_id='stage_airports_to_redshift',
+#     redshift_conn_id='redshift',
+#     aws_credentials_id='aws_credentials',
+#     table=staging_tables["airports"],
+#     s3_directory=f"{s3_data_dir}",
+#     s3_bucket=s3_bucket,
+#     dag=dag
+# )
+
+copy_immigration_scripts_to_S3 = LoadToS3Operator(
+    task_id='copy_immigration_scripts_to_S3',
+    local_directory='scripts/immigration',
+    s3_directory=f"{s3_scripts_dir}/immigration",
     s3_bucket=s3_bucket,
     dag=dag,
 )
 
-copy_airports_to_S3 = LoadToS3Operator(
-    task_id='copy_airports_to_S3',
-    local_directory='dags/data/cleaned/airports',
-    s3_directory=f"{s3_data_dir}/airports",
-    s3_bucket=s3_bucket,
-    dag=dag,
-)
+create_emr_for_immigration = EmrCreateJobFlowOperator(
+        task_id='create_emr_for_immigration',
+        job_flow_overrides=JOB_FLOW_OVERRIDES,
+        aws_conn_id='aws_default',
+        emr_conn_id='emr_default',
+        dag=dag,
+    )
 
-drop_redshift_staging_tables = RedshifQueriesOperator(
-    task_id='drop_redshift_staging_tables',
-    redshift_conn_id='redshift',
-    query_list=drop_tables_queries,
-    query_type='drop tables',
-    dag=dag,
-)
+add_clean_immigration_on_emr = EmrAddStepsOperator(
+        task_id='add_clean_immigration_steps',
+        job_flow_id="{{ task_instance.xcom_pull(task_ids='create_emr_for_immigration', key='return_value') }}",
+        aws_conn_id='aws_default',
+        steps=SPARK_STEPS,
+        params = {
+            "S3_BUCKET": s3_bucket,
+            "S3_DIRECTORY": f"{s3_scripts_dir}/immigration",
+            "S3_SCRIPT": "spark_immigration.py"
+        },
+        dag=dag,
+    )
 
-create_redshift_staging_tables = RedshifQueriesOperator(
-    task_id='create_redshift_staging_tables',
-    redshift_conn_id='redshift',
-    query_list=create_tables_queries,
-    query_type='create tables',
-    dag=dag,
-)
+clean_immigration_step_checker = EmrStepSensor(
+        task_id='clean_immigration_step_checker',
+        job_flow_id="{{ task_instance.xcom_pull('create_emr_for_immigration', key='return_value') }}",
+        step_id="{{ task_instance.xcom_pull(task_ids='add_clean_immigration_steps', key='return_value')[0] }}",
+        aws_conn_id='aws_default',
+        dag=dag,
+    )
 
-stage_demography_to_redshift = S3ToRedshiftOperator(
-    task_id='stage_demography_to_redshift',
-    redshift_conn_id='redshift',
-    aws_credentials_id='aws_credentials',
-    table=staging_tables["demography"],
-    s3_directory=f"{s3_data_dir}",
-    s3_bucket=s3_bucket,
-    dag=dag
-)
-
-stage_airports_to_redshift = S3ToRedshiftOperator(
-    task_id='stage_airports_to_redshift',
-    redshift_conn_id='redshift',
-    aws_credentials_id='aws_credentials',
-    table=staging_tables["airports"],
-    s3_directory=f"{s3_data_dir}",
-    s3_bucket=s3_bucket,
-    dag=dag
-)
+# clean_immigration_cluster_remover = EmrTerminateJobFlowOperator(
+#         task_id='clean_immigration_cluster_remover',
+#         job_flow_id="{{ task_instance.xcom_pull(task_ids='create_emr_for_immigration', key='return_value') }}",
+#         aws_conn_id='aws_default',
+#         dag=dag,
+#     )
 
 
-clean_demography_csv >> copy_demography_to_S3
+# clean_demography_csv >> copy_demography_to_S3
 
-clean_airports_csv >> copy_airports_to_S3
+# clean_airports_csv >> copy_airports_to_S3
 
-[copy_demography_to_S3, copy_airports_to_S3] >> drop_redshift_staging_tables >> create_redshift_staging_tables
+# [copy_demography_to_S3, copy_airports_to_S3] >> drop_redshift_staging_tables >> create_redshift_staging_tables
 
-create_redshift_staging_tables >> [stage_demography_to_redshift, stage_airports_to_redshift]
+# create_redshift_staging_tables >> [stage_demography_to_redshift, stage_airports_to_redshift]
+
+copy_immigration_scripts_to_S3 >> create_emr_for_immigration >> add_clean_immigration_on_emr >> clean_immigration_step_checker
