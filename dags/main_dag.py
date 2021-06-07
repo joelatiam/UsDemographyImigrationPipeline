@@ -2,21 +2,25 @@ from datetime import datetime
 
 from airflow import DAG
 from airflow.models import Variable
+from airflow.contrib.operators.spark_submit_operator import (
+    SparkSubmitOperator
+)
 
 from operators import (
-    PandasCleanCsvOperator, 
+    PandasCleanCsvOperator,
     LoadToS3Operator,
     RedshifQueriesOperator, S3ToRedshiftOperator
-    )
+)
 from helpers import (
     create_tables_queries, drop_tables_queries,
-    staging_data, 
+    staging_data,
     staging_tables
-    )
+)
 
 s3_bucket = Variable.get("s3_bucket")
+s3_log_bucket = Variable.get("s3_log_bucket")
 
-start_date = datetime(2021, 5, 20)
+start_date = datetime(2021, 6, 7)
 
 default_args = {
     'owner': 'joelatiam',
@@ -36,39 +40,57 @@ dag = DAG(
 )
 
 s3_data_dir = 'UsDemographyImmigration/data'
+s3_scripts_dir = 'UsDemographyImmigration/scripts'
 
 
 clean_demography_csv = PandasCleanCsvOperator(
     task_id='clean_demography_csv',
-    source_directory_path='dags/data/raw/demography',
-    destination_directory_path='dags/data/cleaned/demography',
+    source_directory_path='data/raw/demography',
+    destination_directory_path='data/cleaned/demography',
     delimiter=';',
     data_definition = staging_data["demography"],
     dag=dag,
 )
 
-clean_airports_csv = PandasCleanCsvOperator(
-    task_id='clean_airports_csv',
-    source_directory_path='dags/data/raw/airports',
-    destination_directory_path='dags/data/cleaned/airports',
-    delimiter=',',
-    data_definition = staging_data["airports"],
-    dag=dag,
-)
-
 copy_demography_to_S3 = LoadToS3Operator(
     task_id='copy_demography_to_S3',
-    local_directory='dags/data/cleaned/demography',
+    local_directory='data/cleaned/demography',
     s3_directory=f"{s3_data_dir}/demography",
     s3_bucket=s3_bucket,
     dag=dag,
 )
 
+clean_airports_csv = PandasCleanCsvOperator(
+    task_id='clean_airports_csv',
+    source_directory_path='data/raw/airports',
+    destination_directory_path='data/cleaned/airports',
+    delimiter=',',
+    data_definition = staging_data["airports"],
+    dag=dag,
+)
+
 copy_airports_to_S3 = LoadToS3Operator(
     task_id='copy_airports_to_S3',
-    local_directory='dags/data/cleaned/airports',
+    local_directory='data/cleaned/airports',
     s3_directory=f"{s3_data_dir}/airports",
     s3_bucket=s3_bucket,
+    dag=dag,
+)
+
+
+clean_immigration_parquet = SparkSubmitOperator(
+    task_id='clean_immigration_parquet',
+    conn_id='spark_standalone',
+    application='scripts/immigration/spark_immigration.py',
+    dag=dag,
+)
+
+copy_immigration_to_S3 = LoadToS3Operator(
+    task_id='copy_immigration_to_S3',
+    local_directory='data/cleaned/immigration',
+    s3_directory=f"{s3_data_dir}/immigration",
+    s3_bucket=s3_bucket,
+    file_formats=['parquet'],
     dag=dag,
 )
 
@@ -108,11 +130,22 @@ stage_airports_to_redshift = S3ToRedshiftOperator(
     dag=dag
 )
 
+stage_immigration_to_redshift = S3ToRedshiftOperator(
+    task_id='stage_immigration_to_redshift',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    table=staging_tables["immigration"],
+    s3_directory=f"{s3_data_dir}",
+    s3_bucket=s3_bucket,
+    dag=dag
+)
 
 clean_demography_csv >> copy_demography_to_S3
 
 clean_airports_csv >> copy_airports_to_S3
 
-[copy_demography_to_S3, copy_airports_to_S3] >> drop_redshift_staging_tables >> create_redshift_staging_tables
+clean_immigration_parquet >> copy_immigration_to_S3
 
-create_redshift_staging_tables >> [stage_demography_to_redshift, stage_airports_to_redshift]
+[copy_demography_to_S3, copy_airports_to_S3, copy_immigration_to_S3] >> drop_redshift_staging_tables >> create_redshift_staging_tables
+
+create_redshift_staging_tables >> [stage_demography_to_redshift, stage_airports_to_redshift, stage_immigration_to_redshift]
