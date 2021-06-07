@@ -7,5 +7,5 @@ __all__ = [
     'PandasCleanCsvOperator',
     'LoadToS3Operator',
     'RedshifQueriesOperator',
-    'S3ToRedshiftOperator'
+    'S3ToRedshiftOperator',
 ]

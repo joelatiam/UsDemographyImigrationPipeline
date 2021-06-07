@@ -40,6 +40,24 @@ iata_code,
 local_code
 """)
 
+staging_immigration_columns_definitions = ("""
+arrival_date DATE,
+arrival_mode VARCHAR(256),
+visa_type SMALLINT,
+birth_year SMALLINT,
+gender VARCHAR(256),
+residential_state VARCHAR(256)
+""")
+
+staging_immigration_columns_names= ("""
+arrival_date,
+arrival_mode,
+visa_type,
+birth_year,
+gender,
+residential_state
+""")
+
 staging_tables = {
     "demography": {
         "name": "staging_demography",
@@ -62,6 +80,18 @@ staging_tables = {
             "format": "csv",
             "delimiter": ",",
             "ignoreheader": "ignoreheader as 1 "
+        },
+    },
+    "immigration": {
+        "name": "staging_immigration",
+        "s3_directory": "immigration",
+        "columns_definition": staging_immigration_columns_definitions,
+        "columns_names": staging_immigration_columns_names,
+        "s3": {
+            "key": "immigration",
+            "format": "parquet",
+            "delimiter": '',
+            "ignoreheader": ''
         },
     }
 }
