@@ -14,7 +14,7 @@ queries_list.append([f"""
         FROM staging_demography
         WHERE
             LENGTH(TRIM(' ' FROM state_code)) <= 2 AND LENGTH(TRIM(' ' FROM state_code)) > 0
-            AND LENGTH(TRIM(' ' FROM state)) >=3
+            AND LENGTH(TRIM(' ' FROM state)) >=2
         )
     ORDER BY state ASC
 """, tables["states"]["name"]])
@@ -30,7 +30,7 @@ queries_list.append([f"""
         FROM staging_demography staging
         LEFT JOIN states ON TRIM(' ' FROM staging.state) = states.name
         WHERE
-            LENGTH(TRIM(' ' FROM staging.city)) >=3
+            LENGTH(TRIM(' ' FROM staging.city)) >=2
         )
     ORDER BY name ASC
 """, tables["cities"]["name"]])

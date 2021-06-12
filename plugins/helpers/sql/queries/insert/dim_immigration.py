@@ -18,7 +18,7 @@ queries_list.append([f"""
     ORDER BY name ASC
 """, tables["arrival_modes"]["name"]])
 
-# Insert into cities table
+# Insert into visa types table
 queries_list.append([f"""
     INSERT INTO {tables["visa_types"]["name"]} ({tables["visa_types"]["columns_to_insert_values"]})
     SELECT DISTINCT name, type FROM

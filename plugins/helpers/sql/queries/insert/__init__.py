@@ -8,6 +8,12 @@ from helpers.sql.queries.insert.dim_immigration import (
     insert_dim_demography as immigration_dim
 )
 
+from helpers.sql.queries.insert.fact_tables import (
+    insert_facts
+)
+
+facts_tables_insert_queries = insert_facts
+
 dim_tables_insert_queries = []
 
 dim_tables_insert_queries.extend(demography_dim)

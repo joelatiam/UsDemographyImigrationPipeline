@@ -15,13 +15,14 @@ from helpers import (
     create_tables_queries, drop_tables_queries,
     staging_data,
     staging_tables,
-    dim_tables_insert_queries
+    dim_tables_insert_queries,
+    facts_tables_insert_queries
 )
 
 s3_bucket = Variable.get("s3_bucket")
 s3_log_bucket = Variable.get("s3_log_bucket")
 
-start_date = datetime(2021, 6, 10)
+start_date = datetime(2021, 6, 12)
 
 default_args = {
     'owner': 'joelatiam',
@@ -95,8 +96,8 @@ copy_immigration_to_S3 = LoadToS3Operator(
     dag=dag,
 )
 
-drop_redshift_staging_tables = RedshifQueriesOperator(
-    task_id='drop_redshift_staging_tables',
+drop_redshift_tables = RedshifQueriesOperator(
+    task_id='drop_redshift_tables',
     redshift_conn_id='redshift',
     query_list=drop_tables_queries,
     query_type='drop tables',
@@ -149,7 +150,15 @@ insert_dim_tables = RedshifQueriesOperator(
     dag=dag,
 )
 
-# insert_dim_tables << [stage_demography_to_redshift, stage_airports_to_redshift, stage_immigration_to_redshift]
+insert_facts_tables = RedshifQueriesOperator(
+    task_id='insert_facts_tables',
+    redshift_conn_id='redshift',
+    query_list=facts_tables_insert_queries,
+    query_type='insert',
+    dag=dag,
+)
+
+
 
 clean_demography_csv >> copy_demography_to_S3
 
@@ -159,7 +168,7 @@ clean_immigration_parquet >> copy_immigration_to_S3
 
 [
     copy_demography_to_S3, copy_airports_to_S3, copy_immigration_to_S3
-] >> drop_redshift_staging_tables >> create_redshift_tables  >> [
+] >> drop_redshift_tables >> create_redshift_tables  >> [
     stage_demography_to_redshift, stage_airports_to_redshift, stage_immigration_to_redshift
-    ] >> insert_dim_tables
+    ] >> insert_dim_tables >> insert_facts_tables
 
