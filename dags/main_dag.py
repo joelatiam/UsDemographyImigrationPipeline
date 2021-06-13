@@ -9,10 +9,14 @@ from airflow.contrib.operators.spark_submit_operator import (
 from operators import (
     PandasCleanCsvOperator,
     LoadToS3Operator,
-    RedshifQueriesOperator, S3ToRedshiftOperator
+    RedshifQueriesOperator,
+    S3ToRedshiftOperator,
+    DataQualityOperator,
 )
 from helpers import (
-    create_tables_queries, drop_tables_queries,
+    tables_list,
+    create_tables_queries,
+    drop_tables_queries,
     staging_data,
     staging_tables,
     dim_tables_insert_queries,
@@ -22,7 +26,7 @@ from helpers import (
 s3_bucket = Variable.get("s3_bucket")
 s3_log_bucket = Variable.get("s3_log_bucket")
 
-start_date = datetime(2021, 6, 12)
+start_date = datetime(2021, 6, 13)
 
 default_args = {
     'owner': 'joelatiam',
@@ -158,6 +162,13 @@ insert_facts_tables = RedshifQueriesOperator(
     dag=dag,
 )
 
+run_quality_checks = DataQualityOperator(
+    task_id='run_quality_checks',
+    redshift_conn_id='redshift',
+    tables_list = tables_list,
+    dag=dag
+)
+
 
 
 clean_demography_csv >> copy_demography_to_S3
@@ -170,5 +181,5 @@ clean_immigration_parquet >> copy_immigration_to_S3
     copy_demography_to_S3, copy_airports_to_S3, copy_immigration_to_S3
 ] >> drop_redshift_tables >> create_redshift_tables  >> [
     stage_demography_to_redshift, stage_airports_to_redshift, stage_immigration_to_redshift
-    ] >> insert_dim_tables >> insert_facts_tables
+    ] >> insert_dim_tables >> insert_facts_tables >> run_quality_checks
 

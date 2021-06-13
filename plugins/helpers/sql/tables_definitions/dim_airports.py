@@ -10,7 +10,7 @@ name
 airports_columns_definitions = ("""
 id INT IDENTITY(1,1) PRIMARY KEY,
 ident VARCHAR(256),
-name VARCHAR(256) NOT NULL UNIQUE,
+name VARCHAR(256) NOT NULL,
 type_id INT,
 state_id INT,
 gps_code VARCHAR(12) UNIQUE,
@@ -37,12 +37,22 @@ airports_dimentions_tables = {
         "name": "airports_types",
         "columns_definition": airports_types_columns_definitions,
         "columns_to_insert_values": airports_types_columns_to_insert_values,
-        "dist_style": "diststyle all"
+        "dist_style": "diststyle all",
+        "sort_key": "sortkey(name)",
+        "data_quality": {
+            "minimum_records": 0,
+            "not_null_columns": ['name']
+        }
     },
     "airports": {
         "name": "airports",
         "columns_definition": airports_columns_definitions,
         "columns_to_insert_values": airports_columns_to_insert_values,
-        "dist_style": "diststyle all"
+        "dist_style": "diststyle all",
+        "sort_key": "compound sortkey(name, type_id)",
+        "data_quality": {
+            "minimum_records": 1,
+            "not_null_columns": ['name']
+        }
     },
 }

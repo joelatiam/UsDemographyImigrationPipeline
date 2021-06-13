@@ -25,6 +25,7 @@ fact_and_dim_tables = """
     CREATE TABLE IF NOT EXISTS {table}
     ({columns})
     {dist_style}
+    {sort_key}
     """
 
 for table in demography_dimentions_tables:
@@ -32,7 +33,8 @@ for table in demography_dimentions_tables:
         fact_and_dim_tables.format(
             table = demography_dimentions_tables[table]["name"],
             columns = demography_dimentions_tables[table]["columns_definition"],
-            dist_style = demography_dimentions_tables[table]["dist_style"]
+            dist_style = demography_dimentions_tables[table]["dist_style"],
+            sort_key = demography_dimentions_tables[table]["sort_key"]
         )
     )
 
@@ -41,7 +43,8 @@ for table in airports_dimentions_tables:
         fact_and_dim_tables.format(
             table = airports_dimentions_tables[table]["name"],
             columns = airports_dimentions_tables[table]["columns_definition"],
-            dist_style = airports_dimentions_tables[table]["dist_style"]
+            dist_style = airports_dimentions_tables[table]["dist_style"],
+            sort_key = airports_dimentions_tables[table]["sort_key"]
         )
     )
 
@@ -50,7 +53,8 @@ for table in immigrations_dimentions_tables:
         fact_and_dim_tables.format(
             table = immigrations_dimentions_tables[table]["name"],
             columns = immigrations_dimentions_tables[table]["columns_definition"],
-            dist_style = immigrations_dimentions_tables[table]["dist_style"]
+            dist_style = immigrations_dimentions_tables[table]["dist_style"],
+            sort_key = immigrations_dimentions_tables[table]["sort_key"]
         )
     )
 
@@ -59,7 +63,8 @@ for table in fact_tables:
         fact_and_dim_tables.format(
             table = fact_tables[table]["name"],
             columns = fact_tables[table]["columns_definition"],
-            dist_style = fact_tables[table]["dist_style"]
+            dist_style = fact_tables[table]["dist_style"],
+            sort_key = fact_tables[table]["sort_key"]
         )
     )
 

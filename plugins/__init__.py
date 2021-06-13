@@ -15,8 +15,10 @@ class DemographyImmigrationPlugin(AirflowPlugin):
         operators.LoadToS3Operator,
         operators.RedshifQueriesOperator,
         operators.S3ToRedshiftOperator,
+        operators.DataQualityOperator,
     ]
     helpers = [
+        helpers.tables_list,
         helpers.staging_data,
         helpers.staging_tables,
         helpers.create_tables_queries,
