@@ -47,12 +47,22 @@ fact_tables = {
         "name": "demography",
         "columns_definition": demography_columns_definitions,
         "columns_to_insert_values": demography_columns_to_insert_values,
-        "dist_style": "diststyle all"
+        "dist_style": "diststyle all",
+        "sort_key": "compound sortkey(city_id, race_id)",
+        "data_quality": {
+            "minimum_records": 1,
+            "not_null_columns": ['city_id', 'race_id']
+        }
     },
     "immigration": {
         "name": "immigration",
         "columns_definition": immigration_columns_definitions,
         "columns_to_insert_values": immigration_columns_to_insert_values,
-        "dist_style": "distkey(residential_state_id)"
+        "dist_style": "distkey(residential_state_id)",
+        "sort_key": "compound sortkey(arrival_date, residential_state_id)",
+        "data_quality": {
+            "minimum_records": 1,
+            "not_null_columns": ['arrival_date']
+        }
     },
 }
