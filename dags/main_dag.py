@@ -24,9 +24,8 @@ from helpers import (
 )
 
 s3_bucket = Variable.get("s3_bucket")
-s3_log_bucket = Variable.get("s3_log_bucket")
 
-start_date = datetime(2021, 6, 13)
+start_date = datetime(2021, 6, 15)
 
 default_args = {
     'owner': 'joelatiam',
