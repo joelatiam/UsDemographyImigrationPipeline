@@ -13,18 +13,9 @@ class DataQualityOperator(BaseOperator):
                  tables_list=[],
                  redshift_conn_id="",
                  *args, **kwargs):
-        """
-            Parameters:
-            redshift_conn_id: "String"
-            tables_list: List of Dictionaries with properties
-                table_name: "String"
-                min_records: Number
-                not_null_columns: List of Strings
-        """
 
         super(DataQualityOperator, self).__init__(*args, **kwargs)
-        # Map params here
-        # Example:
+        
         self.redshift_conn_id = redshift_conn_id
         self.tables_list = tables_list
 
