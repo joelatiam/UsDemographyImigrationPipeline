@@ -16,6 +16,15 @@ class LoadToS3Operator(BaseOperator):
                  s3_bucket="",
                  file_formats=[],
                  *args, **kwargs):
+        """ 
+            Send files to CSV
+            Parameters:
+            local_directory: "String"
+            s3_directory: "String"
+            s3_bucket: "String"
+            file_formats: "List of Strings"
+            
+        """
 
         super(LoadToS3Operator, self).__init__(*args, **kwargs)
         self.s3_bucket = s3_bucket

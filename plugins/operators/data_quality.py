@@ -13,6 +13,13 @@ class DataQualityOperator(BaseOperator):
                  tables_list=[],
                  redshift_conn_id="",
                  *args, **kwargs):
+        """ 
+            Run Data Quality Check on final tables
+            Parameters:
+            redshift_conn_id: "String"
+            tables_list: "list of tables having data quality Dictionary"
+            
+        """
 
         super(DataQualityOperator, self).__init__(*args, **kwargs)
         

@@ -19,6 +19,12 @@ def create_spark_session():
 
 
 def get_arrival_mode(x):
+    """
+            Parameters:
+            x: "Number"
+            Returns String Value Representing the arrival mode
+            Eg: X =3  return 'Land'
+    """
     try:
 
         arrival_mode = int(x)
@@ -36,6 +42,12 @@ def get_arrival_mode(x):
 
 
 def convert_datetime(x):
+    """     
+        Converts SAS dates to datetime
+        Parameters:
+        x: "Number"
+            
+    """
     try:
         start = datetime(1960, 1, 1)
         return start + timedelta(days=int(x))
@@ -44,6 +56,14 @@ def convert_datetime(x):
 
 
 def process_immigration_data(spark, input_data, output_data):
+    """     
+        Converts Process Parquet Data related to immigration
+        Parameters:
+        spark: A Spark Connection
+        input_data: "String" Source directory
+        output_data: "String" Destination directory
+      
+    """
 
     # filepath to song data file
     immigration_data = os.path.join(

@@ -14,6 +14,15 @@ class RedshifQueriesOperator(BaseOperator):
                  query_type="",
                  append_data = False,
                  *args, **kwargs):
+        """ 
+            Run queries on Redshift
+            Parameters:
+            redshift_conn_id: "String"
+            query_list: "List of Query Strings"
+            query_type: "String"
+            append_data: "Boolean"
+            
+        """
 
         super(RedshifQueriesOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
