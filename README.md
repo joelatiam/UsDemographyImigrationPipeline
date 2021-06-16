@@ -15,6 +15,7 @@
         - [Operators](#operators)
         - [Graph View](#graph-view)
         - [Tasks](#tasks)
+    - [Data Diagram](#data-diagram)
     - [Data Dictionary](#data-dictionary)
         - [Staging Tables](#staging-tables)
         - [Final Tables](#final-tables)
@@ -162,6 +163,14 @@ Activate the DAG `us_demography_and_immigration` and start it if it's not runnin
     Sends a list of thw tables found in  `plugins/helpers/sql/tables_definitions` to  **RedshifQueriesOperator**
 
 
+### Data Diagram
+The diagram represents relationship between our final tables
+-  **Dimension Tables** 
+    `states, cities, races, airports_types, airports, arrival_modes, visa_types, time`
+-  **Fact Tables** 
+    `immigration, demography`
+
+![alt DB diagram](./img/final-tables-diagram.png "Diagram of the final tables")
 
 ### Data Dictionary
 
