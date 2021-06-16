@@ -15,6 +15,16 @@ class S3ToRedshiftOperator(BaseOperator):
                  s3_directory="",
                  s3_bucket="",
                  *args, **kwargs):
+        """ 
+            Copy from S3 to Redshift using Copy Command
+            Parameters:
+            redshift_conn_id: "String"
+            aws_credentials_id: "String"
+            table: "String"
+            s3_directory: "String"
+            s3_bucket: "String"
+            
+        """
 
         super(S3ToRedshiftOperator, self).__init__(*args, **kwargs)
         self.table= table

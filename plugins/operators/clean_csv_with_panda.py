@@ -16,6 +16,15 @@ class PandasCleanCsvOperator(BaseOperator):
                  data_definition = None,
                  delimiter=',',
                  *args, **kwargs):
+        """ 
+            Process CSV files with Pandas
+            Parameters:
+            source_directory_path: "String"
+            destination_directory_path: "String"
+            data_definition: "Dictionary"
+            delimiter: "String"
+            
+        """
 
         super(PandasCleanCsvOperator, self).__init__(*args, **kwargs)
         self.source_directory_path = source_directory_path
