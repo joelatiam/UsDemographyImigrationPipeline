@@ -16,6 +16,7 @@
         - [Graph View](#graph-view)
         - [Tasks](#tasks)
     - [Data Diagram](#data-diagram)
+    - [OLAP Query Exemples](#olap-query-exemples)
     - [Data Dictionary](#data-dictionary)
         - [Staging Tables](#staging-tables)
         - [Final Tables](#final-tables)
@@ -171,6 +172,19 @@ The diagram represents relationship between our final tables
     `immigration, demography`
 
 ![alt DB diagram](./img/final-tables-diagram.png "Diagram of the final tables")
+
+### OLAP Query Exemples
+We can run many analytical queries on our database. Following are few of the exemples
+-  **Count delivered visa per type** 
+    `SELECT vt.name, count(imm.*) FROM immigration imm
+    INNER JOIN visa_types ON imm.visa_type_id = vt.id
+    GROUP BY vt.name `
+
+-  **Get Small Airports found in a State X** eg: `'NY'`
+    `SELECT states.code AS state_code, type.name AS airport_type, airp.*  FROM airports airp
+    INNER JOIN airports_types type ON airp.type_id = type.id
+    INNER JOIN states  ON airp.state_id = states.id
+    WHERE states.code = 'NY' AND type.name = 'small_airport'`
 
 ### Data Dictionary
 
